@@ -5,7 +5,7 @@ interface Chapter {
   eyebrow: string;
   headline: string;
   description: string;
-  frameIndex: number; // Anchor frame for quick jumping / reduced motion
+  frameIndex: number;
 }
 
 const TOTAL_FRAMES = 300;
@@ -25,7 +25,7 @@ const CHAPTERS: Chapter[] = [
     headline: 'Every report adds context.',
     description:
       'A photo and location shared through WhatsApp help turn a local incident into useful evidence.',
-    frameIndex: 90,
+    frameIndex: 75,
   },
   {
     id: 3,
@@ -33,7 +33,7 @@ const CHAPTERS: Chapter[] = [
     headline: 'See the hotspots, not just the incidents.',
     description:
       'Bring reports together with available rainfall, terrain and historical information to identify zones that need attention.',
-    frameIndex: 155,
+    frameIndex: 150,
   },
   {
     id: 4,
@@ -41,7 +41,7 @@ const CHAPTERS: Chapter[] = [
     headline: "A resolved complaint isn't always a solved problem.",
     description:
       'When waterlogging returns after a maintenance action has been recorded, JalDrishti flags the location for closer investigation.',
-    frameIndex: 220,
+    frameIndex: 225,
   },
   {
     id: 5,
@@ -66,9 +66,10 @@ export const StorytellingSection: React.FC = () => {
   const rafIdRef = useRef<number | null>(null);
   const currentDrawnFrameRef = useRef<number>(1);
   const targetFrameRef = useRef<number>(1);
+  const lastWheelTimeRef = useRef<number>(0);
+  const settleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [activeChapter, setActiveChapter] = useState<number>(0);
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [isPosterLoaded, setIsPosterLoaded] = useState<boolean>(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
 
@@ -95,7 +96,7 @@ export const StorytellingSection: React.FC = () => {
             clearInterval(checkInterval);
             resolve(imagesRef.current.get(frameNum)!);
           }
-        }, 30);
+        }, 25);
       });
     }
 
@@ -127,7 +128,6 @@ export const StorytellingSection: React.FC = () => {
     let imgToDraw = imagesRef.current.get(frameNum);
 
     if (!imgToDraw || !imgToDraw.complete || imgToDraw.naturalWidth === 0) {
-      // Find nearest loaded frame to avoid blank flash
       let nearestDist = Infinity;
       let nearestFrame = currentDrawnFrameRef.current;
 
@@ -204,14 +204,19 @@ export const StorytellingSection: React.FC = () => {
       if (!cancelled) drawFrame(1);
     });
 
-    // 2. Preload sparse keyframes (every 10th frame) to give immediate coverage across entire scroll range
+    // 2. Preload chapter anchor frames first for fast snapping
+    CHAPTERS.forEach((ch) => {
+      loadFrame(ch.frameIndex);
+    });
+
+    // 3. Preload sparse keyframes (every 10th frame) across the scroll range
     const preloadKeyframes = async () => {
       for (let f = 10; f <= TOTAL_FRAMES; f += 10) {
         if (cancelled) break;
         await loadFrame(f);
       }
 
-      // 3. Incrementally preload all remaining frames
+      // 4. Progressively preload all remaining frames
       for (let f = 1; f <= TOTAL_FRAMES; f++) {
         if (cancelled) break;
         if (!imagesRef.current.has(f)) {
@@ -220,7 +225,7 @@ export const StorytellingSection: React.FC = () => {
       }
     };
 
-    const timer = setTimeout(preloadKeyframes, 200);
+    const timer = setTimeout(preloadKeyframes, 150);
 
     return () => {
       cancelled = true;
@@ -261,15 +266,24 @@ export const StorytellingSection: React.FC = () => {
           const rawProgress = currentScroll / totalScrollable;
           const clampedProgress = Math.max(0, Math.min(1, rawProgress));
 
-          setScrollProgress(clampedProgress);
+          // Calculate active chapter based on 5 equal segments:
+          // Scene 0: [0, 0.125), Scene 1: [0.125, 0.375), Scene 2: [0.375, 0.625), Scene 3: [0.625, 0.875), Scene 4: [0.875, 1.0]
+          let chapterIdx = 0;
+          if (clampedProgress >= 0.875) {
+            chapterIdx = 4;
+          } else if (clampedProgress >= 0.625) {
+            chapterIdx = 3;
+          } else if (clampedProgress >= 0.375) {
+            chapterIdx = 2;
+          } else if (clampedProgress >= 0.125) {
+            chapterIdx = 1;
+          } else {
+            chapterIdx = 0;
+          }
 
-          // Calculate chapter (0 to 4)
-          // 5 chapters evenly spaced across scroll progress [0-0.2, 0.2-0.4, 0.4-0.6, 0.6-0.8, 0.8-1.0]
-          const chapterIdx = Math.min(4, Math.max(0, Math.floor(clampedProgress * 5)));
           setActiveChapter(chapterIdx);
 
           if (prefersReducedMotion) {
-            // In reduced motion, snap to representative frame
             const target = CHAPTERS[chapterIdx].frameIndex;
             targetFrameRef.current = target;
             drawFrame(target);
@@ -285,7 +299,7 @@ export const StorytellingSection: React.FC = () => {
           targetFrameRef.current = targetFrame;
           drawFrame(targetFrame);
 
-          // Preload adjacent frames ahead of scroll direction
+          // Preload adjacent frames
           for (let offset = 1; offset <= 8; offset++) {
             const nextF = Math.min(TOTAL_FRAMES, targetFrame + offset);
             const prevF = Math.max(1, targetFrame - offset);
@@ -294,17 +308,114 @@ export const StorytellingSection: React.FC = () => {
           }
         });
       }
+
+      // Touch / Trackpad auto-settle to nearest scene when user stops scrolling
+      if (settleTimeoutRef.current) {
+        clearTimeout(settleTimeoutRef.current);
+      }
+      settleTimeoutRef.current = setTimeout(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const viewportH = window.innerHeight;
+        const totalScrollable = container.offsetHeight - viewportH;
+        const currentScroll = -rect.top;
+
+        // Only snap if currently inside the storytelling active range (not hero or footer)
+        if (currentScroll > 50 && currentScroll < totalScrollable - 50) {
+          const progress = currentScroll / totalScrollable;
+          const nearestScene = Math.round(progress * 4);
+          const targetY = container.offsetTop + (nearestScene / 4) * totalScrollable;
+
+          if (Math.abs(window.scrollY - targetY) > 20) {
+            window.scrollTo({
+              top: targetY,
+              behavior: 'smooth',
+            });
+          }
+        }
+      }, 160);
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    // Trigger initial calculation
     onScroll();
 
     return () => {
       window.removeEventListener('scroll', onScroll);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+      if (settleTimeoutRef.current) clearTimeout(settleTimeoutRef.current);
     };
   }, [drawFrame, loadFrame, prefersReducedMotion]);
+
+  // Discrete mouse-wheel snapping (advances/reverses 1 complete scene per wheel gesture)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+
+      // Check if storytelling section is active in the viewport
+      if (rect.bottom <= 60 || rect.top >= viewportH - 60) {
+        // Outside storytelling section: normal scrolling
+        return;
+      }
+
+      const totalScrollable = container.offsetHeight - viewportH;
+      const currentScroll = -rect.top;
+      const progress = currentScroll / totalScrollable;
+      const currentScene = Math.round(Math.max(0, Math.min(1, progress)) * 4);
+
+      // Scrolling Down
+      if (e.deltaY > 0) {
+        if (currentScene >= 4) {
+          // At final scene (Scene 5): allow normal scroll down into footer
+          return;
+        }
+
+        const now = Date.now();
+        if (now - lastWheelTimeRef.current < 550) {
+          e.preventDefault();
+          return;
+        }
+        lastWheelTimeRef.current = now;
+
+        e.preventDefault();
+        const nextScene = currentScene + 1;
+        const targetScrollY = container.offsetTop + (nextScene / 4) * totalScrollable;
+        window.scrollTo({
+          top: targetScrollY,
+          behavior: 'smooth',
+        });
+      }
+      // Scrolling Up
+      else if (e.deltaY < 0) {
+        if (currentScene <= 0) {
+          // At first scene (Scene 1): allow normal scroll up into hero
+          return;
+        }
+
+        const now = Date.now();
+        if (now - lastWheelTimeRef.current < 550) {
+          e.preventDefault();
+          return;
+        }
+        lastWheelTimeRef.current = now;
+
+        e.preventDefault();
+        const prevScene = currentScene - 1;
+        const targetScrollY = container.offsetTop + (prevScene / 4) * totalScrollable;
+        window.scrollTo({
+          top: targetScrollY,
+          behavior: 'smooth',
+        });
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
 
   // Click on chapter indicator to scroll smoothly to that chapter
   const scrollToChapter = (index: number) => {
@@ -313,8 +424,7 @@ export const StorytellingSection: React.FC = () => {
 
     const viewportH = window.innerHeight;
     const totalScrollable = container.offsetHeight - viewportH;
-    const targetScrollY =
-      container.offsetTop + (index / (CHAPTERS.length - 1)) * totalScrollable;
+    const targetScrollY = container.offsetTop + (index / 4) * totalScrollable;
 
     window.scrollTo({
       top: targetScrollY,
@@ -330,7 +440,7 @@ export const StorytellingSection: React.FC = () => {
       ref={containerRef}
       aria-label="How JalDrishti works storytelling"
       className="relative w-full bg-gradient-to-b from-[#EAF5FF] via-[#F4F9FF] to-[#EAF5FF] z-20"
-      style={{ height: '360vh' }}
+      style={{ height: '400vh' }}
     >
       {/* Sticky Viewport Stage */}
       <div className="sticky top-0 h-screen w-full flex flex-col justify-center overflow-hidden">
@@ -344,7 +454,7 @@ export const StorytellingSection: React.FC = () => {
               </span>
             </div>
 
-            {/* Overall frame progress badge */}
+            {/* Overall chapter progress badge */}
             <div className="hidden sm:flex items-center gap-2 font-sans text-[11px] text-[#526984] font-medium select-none">
               <span>Scene</span>
               <span className="font-semibold text-[#09172A]">0{activeChapter + 1}</span>
@@ -384,10 +494,10 @@ export const StorytellingSection: React.FC = () => {
                 })}
               </nav>
 
-              {/* Chapter Narrative Card with subtle, restrained transition */}
+              {/* Chapter Narrative Content Container */}
               <div
                 key={currentChapter.id}
-                className="transition-all duration-300 ease-out transform translate-y-0 opacity-100"
+                className="min-h-[220px] sm:min-h-[240px] flex flex-col justify-center transition-all duration-300 ease-out"
               >
                 {/* Eyebrow Label */}
                 <div className="font-sans font-medium text-[13px] sm:text-[14px] text-[#1769C2] tracking-[0.2em] uppercase mb-3 select-none">
@@ -395,25 +505,27 @@ export const StorytellingSection: React.FC = () => {
                 </div>
 
                 {/* Headline in Instrument Serif */}
-                <h2
-                  className="font-serif font-normal text-[#09172A] text-[34px] sm:text-[44px] lg:text-[48px] xl:text-[52px] leading-[1.08] tracking-tight mb-4 sm:mb-5 text-left"
-                >
+                <h2 className="font-serif font-normal text-[#09172A] text-[34px] sm:text-[44px] lg:text-[48px] xl:text-[52px] leading-[1.08] tracking-tight mb-4 sm:mb-5 text-left select-none">
                   {currentChapter.headline}
                 </h2>
 
                 {/* Supporting Paragraph in Manrope */}
-                <p className="font-sans font-normal text-[#526984] text-[16px] sm:text-[18px] lg:text-[19px] leading-[1.55] max-w-[480px]">
+                <p className="font-sans font-normal text-[#526984] text-[16px] sm:text-[18px] lg:text-[19px] leading-[1.55] max-w-[480px] select-none">
                   {currentChapter.description}
                 </p>
               </div>
 
-              {/* Scroll prompt hint on first chapter */}
-              {activeChapter === 0 && (
-                <div className="mt-8 flex items-center gap-2 text-[12px] font-sans text-[#526984] select-none opacity-80 animate-bounce">
-                  <span>Scroll down to continue the story</span>
-                  <span className="text-base">&darr;</span>
-                </div>
-              )}
+              {/* Navigation prompt hint */}
+              <div className="mt-6 flex items-center gap-3 text-[12px] font-sans text-[#526984] select-none opacity-80">
+                {activeChapter < 4 ? (
+                  <>
+                    <span>Scroll to advance to Scene 0{activeChapter + 2}</span>
+                    <span className="text-base">&darr;</span>
+                  </>
+                ) : (
+                  <span>Scene 05 of 05 &middot; Story complete</span>
+                )}
+              </div>
             </div>
 
             {/* Right Column: Visual Stage (60–65% width) */}
@@ -434,15 +546,6 @@ export const StorytellingSection: React.FC = () => {
                     </span>
                   </div>
                 )}
-
-                {/* Subtle frame counter pill on top-right */}
-                <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 bg-white/80 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] font-sans font-medium text-[#09172A]/80 shadow-xs border border-white/60 select-none">
-                  <span className="text-[#1769C2]">
-                    {Math.round(scrollProgress * 100)}%
-                  </span>
-                  <span className="mx-1 text-[#CADDF0]">&middot;</span>
-                  <span>Frame {targetFrameRef.current} / 300</span>
-                </div>
               </div>
             </div>
           </div>
@@ -450,10 +553,10 @@ export const StorytellingSection: React.FC = () => {
           {/* Bottom subtle bar */}
           <div className="pb-3 sm:pb-4 flex items-center justify-between border-t border-[#CADDF0]/40 pt-3 text-[11px] font-sans text-[#526984]/70">
             <span className="uppercase tracking-[0.2em] font-medium">
-              Stage {activeChapter + 1} of 5
+              Stage {activeChapter + 1} of 5 &middot; {currentChapter.headline}
             </span>
             <span className="uppercase tracking-[0.15em]">
-              Scroll to scrub timeline
+              Scroll to advance scenes
             </span>
           </div>
         </div>
