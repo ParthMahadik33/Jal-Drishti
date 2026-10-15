@@ -31,7 +31,9 @@ export const BackgroundVideo: React.FC<BackgroundVideoProps> = ({ className }) =
 
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
-      targetTimeRef.current = videoRef.current.currentTime || 0;
+      const initialTime = videoRef.current.duration * 0.5;
+      targetTimeRef.current = initialTime;
+      videoRef.current.currentTime = initialTime;
     }
   };
 
@@ -51,7 +53,8 @@ export const BackgroundVideo: React.FC<BackgroundVideoProps> = ({ className }) =
       const delta = e.clientX - prevXRef.current;
       prevXRef.current = e.clientX;
 
-      const timeOffset = (delta / window.innerWidth) * SENSITIVITY * video.duration;
+      // Inverted so eye tracks with cursor (cursor right -> eye looks right, cursor left -> eye looks left)
+      const timeOffset = -(delta / window.innerWidth) * SENSITIVITY * video.duration;
       targetTimeRef.current = Math.min(
         Math.max(targetTimeRef.current + timeOffset, 0),
         video.duration
@@ -87,7 +90,8 @@ export const BackgroundVideo: React.FC<BackgroundVideoProps> = ({ className }) =
         const delta = clientX - prevXRef.current;
         prevXRef.current = clientX;
 
-        const timeOffset = (delta / window.innerWidth) * SENSITIVITY * video.duration;
+        // Inverted so eye tracks with touch
+        const timeOffset = -(delta / window.innerWidth) * SENSITIVITY * video.duration;
         targetTimeRef.current = Math.min(
           Math.max(targetTimeRef.current + timeOffset, 0),
           video.duration
