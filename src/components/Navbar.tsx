@@ -22,7 +22,7 @@ export const Navbar: React.FC = () => {
           <img
             src={logoWithText}
             alt="JalDrishti Logo"
-            className="h-11 sm:h-13 md:h-14 w-auto object-contain"
+            className="h-14 sm:h-16 md:h-[68px] w-auto object-contain"
             style={{ mixBlendMode: 'multiply' }}
           />
         </a>
