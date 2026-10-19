@@ -1,6 +1,10 @@
 import React from 'react';
 
-export const HeroSection: React.FC = () => {
+interface HeroSectionProps {
+  onOpenDashboard?: () => void;
+}
+
+export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDashboard }) => {
   return (
     <section className="relative z-10 w-full max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-16 flex-1 flex flex-col justify-center py-10 lg:py-16">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center w-full">
@@ -32,15 +36,16 @@ export const HeroSection: React.FC = () => {
           {/* Action CTAs */}
           <div className="flex flex-wrap items-center gap-4 sm:gap-5 w-full sm:w-auto">
             {/* Primary CTA */}
-            <a
-              href="#explore"
+            <button
+              type="button"
+              onClick={onOpenDashboard}
               className="group inline-flex items-center justify-center gap-3 bg-[#1769C2] hover:bg-[#1257A2] text-white font-sans font-medium text-[16px] sm:text-[17px] h-[58px] sm:h-[62px] px-8 sm:px-9 rounded-full shadow-[0_12px_28px_-6px_rgba(23,105,194,0.38)] hover:shadow-[0_16px_34px_-6px_rgba(23,105,194,0.48)] transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
               <span>Explore JalDrishti</span>
               <span className="inline-block transform group-hover:translate-x-1 transition-transform duration-200 text-lg leading-none">
                 &rarr;
               </span>
-            </a>
+            </button>
 
             {/* Secondary CTA */}
             <a

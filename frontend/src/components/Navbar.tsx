@@ -7,7 +7,11 @@ const NAV_LINKS = [
   { label: 'Impact', href: '#impact' },
 ];
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  onOpenDashboard?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ onOpenDashboard }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -44,16 +48,17 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* Right: Outlined CTA button (Desktop) */}
-        <div className="hidden md:flex items-center">
-          <a
-            href="#get-started"
-            className="group font-sans font-medium text-[14px] lg:text-[15px] text-[#09172A] border border-[#CADDF0] hover:border-[#1769C2] hover:text-[#1769C2] bg-white/40 hover:bg-white/80 backdrop-blur-xs rounded-full px-5 lg:px-6 py-2.5 transition-all duration-200 flex items-center gap-2 shadow-xs"
+        <div className="hidden md:flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onOpenDashboard}
+            className="group font-sans font-medium text-[14px] lg:text-[15px] text-[#09172A] border border-[#CADDF0] hover:border-[#1769C2] hover:text-[#1769C2] bg-white/40 hover:bg-white/80 backdrop-blur-xs rounded-full px-5 lg:px-6 py-2.5 transition-all duration-200 flex items-center gap-2 shadow-xs cursor-pointer"
           >
             <span>Get Started</span>
             <span className="transform group-hover:translate-x-0.5 transition-transform duration-200">
               &rarr;
             </span>
-          </a>
+          </button>
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -102,13 +107,16 @@ export const Navbar: React.FC = () => {
               {link.label}
             </a>
           ))}
-          <a
-            href="#get-started"
-            onClick={() => setMobileMenuOpen(false)}
-            className="mt-4 font-sans font-medium text-[16px] text-center text-[#09172A] border border-[#1769C2] bg-white rounded-full py-3.5 px-6 shadow-xs"
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              if (onOpenDashboard) onOpenDashboard();
+            }}
+            className="mt-4 font-sans font-medium text-[16px] text-center text-[#09172A] border border-[#1769C2] bg-white rounded-full py-3.5 px-6 shadow-xs cursor-pointer"
           >
             Get Started &rarr;
-          </a>
+          </button>
         </div>
       </div>
     </header>

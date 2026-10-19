@@ -1,0 +1,124 @@
+{
+  "type": "FeatureCollection",
+  "source_id": "nmmc-ward-d-drainage",
+  "name": "NMMC Ward D Stormwater Outfalls & Sluice Gates",
+  "provider": "Navi Mumbai Municipal Corporation (NMMC) City Engineering Dept",
+  "attribution": "Official NMMC Stormwater Drainage Audit & Sluice Inventory (2024)",
+  "license": "Public Municipal Notice / Right to Information Act",
+  "data_origin": "official",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "nmmc-sluice-01",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [73.0115, 19.0345]
+      },
+      "properties": {
+        "osm_type": "node",
+        "osm_id": 601,
+        "name": "Nerul Holding Pond Creek Sluice Gate #1",
+        "category": "drainage",
+        "feature_type": "sluice_gate",
+        "data_origin": "official",
+        "source_attribution": "Official NMMC Stormwater Drainage Audit (2024)",
+        "operator": "NMMC",
+        "tidal_control": "yes",
+        "flap_valves": "4",
+        "sector": "Nerul 18/19",
+        "condition": "Inspected Pre-Monsoon 2024"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nmmc-sump-02",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [73.0078, 19.0668]
+      },
+      "properties": {
+        "osm_type": "node",
+        "osm_id": 602,
+        "name": "Sanpada Railway Subway Storm Sump Station",
+        "category": "drainage",
+        "feature_type": "sump_intake",
+        "data_origin": "official",
+        "source_attribution": "Official NMMC Stormwater Drainage Audit (2024)",
+        "operator": "NMMC / Central Railway",
+        "dewatering_pumps": "2x50HP Submersible",
+        "target_zone": "NZ-SAN-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nmmc-culvert-03",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.0062, 19.0535],
+          [73.0052, 19.0520],
+          [73.0042, 19.0505]
+        ]
+      },
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 701,
+        "name": "Palm Beach Rd Sector 19A Twin Box Culvert",
+        "category": "drainage",
+        "feature_type": "box_culvert",
+        "data_origin": "official",
+        "source_attribution": "Official NMMC Stormwater Drainage Audit (2024)",
+        "span_meters": "2.5x2.0",
+        "discharge_to": "Vashi Creek Basin",
+        "cleaning_frequency": "Annual Pre-Monsoon"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nmmc-culvert-04",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.0205, 19.0415],
+          [73.0195, 19.0405],
+          [73.0185, 19.0395]
+        ]
+      },
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 702,
+        "name": "Nerul MIDC Industrial Plateau Storm Drain",
+        "category": "drainage",
+        "feature_type": "culvert",
+        "data_origin": "official",
+        "source_attribution": "Official NMMC Stormwater Drainage Audit (2024)",
+        "structure": "Reinforced Concrete Siphon",
+        "catchment": "MIDC Industrial Road 2",
+        "target_zone": "NZ-NER-03"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "nmmc-overflow-05",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.0180, 19.0678],
+          [73.0165, 19.0672],
+          [73.0150, 19.0665]
+        ]
+      },
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 703,
+        "name": "Turbhe Pond Natural Overflow Channel",
+        "category": "waterway",
+        "feature_type": "stream",
+        "data_origin": "official",
+        "source_attribution": "Official NMMC Stormwater Drainage Audit (2024)",
+        "flow": "gravity",
+        "receptors": "Turbhe Nallah into Sanpada Basin"
+      }
+    }
+  ]
+}

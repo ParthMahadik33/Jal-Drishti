@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. JalDrishti Web API Service (Flask + Gunicorn)
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jaldrishti_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - DATABASE_URL=sqlite:////data/jaldrishti.db
+      - COLLECTOR_LOCK_FILE=/data/collector.lock
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
+      - WHATSAPP_APP_SECRET=${WHATSAPP_APP_SECRET}
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+      - WHATSAPP_BUSINESS_ACCOUNT_ID=${WHATSAPP_BUSINESS_ACCOUNT_ID}
+      - OPERATOR_API_KEY=${OPERATOR_API_KEY}
+    volumes:
+      - jaldrishti_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # 2. Autonomous Background Collector Worker (Single-Instance Ingestion)
+  # ---------------------------------------------------------------------------
+  collector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jaldrishti_collector
+    restart: unless-stopped
+    command: ["python", "-m", "backend.collector"]
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - DATABASE_URL=sqlite:////data/jaldrishti.db
+      - COLLECTOR_LOCK_FILE=/data/collector.lock
+      - WEATHER_POLL_INTERVAL_SECONDS=1800
+      - OSM_POLL_INTERVAL_SECONDS=86400
+    volumes:
+      - jaldrishti_data:/data
+    depends_on:
+      - web
+
+# ---------------------------------------------------------------------------
+# Persistent Shared Volume (Survives container restarts and updates)
+# ---------------------------------------------------------------------------
+volumes:
+  jaldrishti_data:
+    driver: local

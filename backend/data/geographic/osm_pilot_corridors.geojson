@@ -1,0 +1,76 @@
+{
+  "type": "FeatureCollection",
+  "source_id": "osm-verified-corridors",
+  "name": "OpenStreetMap Verified Pilot Corridors & Stations",
+  "provider": "OpenStreetMap Contributors",
+  "attribution": "Map data © OpenStreetMap contributors (ODbL 1.0) verified extract",
+  "license": "Open Database License 1.0 (ODbL)",
+  "data_origin": "official",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "osm-node-245981200",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [73.0085, 19.0645]
+      },
+      "properties": {
+        "osm_type": "node",
+        "osm_id": 245981200,
+        "name": "Sanpada Railway Station",
+        "category": "railway",
+        "feature_type": "station",
+        "data_origin": "official",
+        "source_attribution": "OpenStreetMap contributors (ODbL 1.0)",
+        "railway": "station",
+        "network": "Mumbai Suburban (Harbour Line)",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "osm-node-245981350",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [73.0175, 19.0335]
+      },
+      "properties": {
+        "osm_type": "node",
+        "osm_id": 245981350,
+        "name": "Nerul Railway Station Junction",
+        "category": "railway",
+        "feature_type": "station",
+        "data_origin": "official",
+        "source_attribution": "OpenStreetMap contributors (ODbL 1.0)",
+        "railway": "station",
+        "junction": "yes",
+        "network": "Mumbai Suburban (Harbour & Trans-Harbour Lines)"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "osm-way-105820100",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [73.0158, 19.0730],
+          [73.0172, 19.0590],
+          [73.0188, 19.0450]
+        ]
+      },
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 105820100,
+        "name": "Thane-Belapur Road (Sanpada–Nerul Section)",
+        "category": "highway",
+        "feature_type": "primary",
+        "data_origin": "official",
+        "source_attribution": "OpenStreetMap contributors (ODbL 1.0)",
+        "highway": "primary",
+        "lanes": "6",
+        "surface": "asphalt",
+        "ref": "State Highway"
+      }
+    }
+  ]
+}
